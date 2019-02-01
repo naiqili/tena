@@ -98,7 +98,7 @@ def main():
     start_epoch = args.start_epoch  # start from epoch 0 or last checkpoint epoch
 
     # Data
-    print('==> Preparing dataset %s' % args.dataset)
+    logger.p('==> Preparing dataset %s' % args.dataset)
     transform_train = transforms.Compose([
         transforms.RandomCrop(32, padding=4),
         transforms.RandomHorizontalFlip(),
@@ -125,11 +125,11 @@ def main():
     testloader = data.DataLoader(testset, batch_size=args.test_batch, shuffle=False, num_workers=args.workers)
     
     # Tena
-    print("==> creating tena unit '{}'".format(args.tena))
+    logger.p("==> creating tena unit '{}'".format(args.tena))
     act_fn = tena.__dict__[args.tena]()
 
     # Model
-    print("==> creating model '{}'".format(args.arch))
+    logger.p("==> creating model '{}'".format(args.arch))
     if args.arch.endswith('resnet'):
         model = models.__dict__[args.arch](
                     num_classes=num_classes,
@@ -139,7 +139,7 @@ def main():
 
     model = torch.nn.DataParallel(model).cuda()
     cudnn.benchmark = True
-    print('    Total params: %.2fM' % (sum(p.numel() for p in model.parameters())/1000000.0))
+    logger.p('    Total params: %.2fM' % (sum(p.numel() for p in model.parameters())/1000000.0))
 
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay)
@@ -151,9 +151,9 @@ def main():
 
 
     if args.evaluate:
-        print('\nEvaluation only')
+        logger.p('\nEvaluation only')
         test_loss, test_acc = test(testloader, model, criterion, start_epoch, use_cuda)
-        print(' Test Loss:  %.8f, Test Acc:  %.2f' % (test_loss, test_acc))
+        logger.p(' Test Loss:  %.8f, Test Acc:  %.2f' % (test_loss, test_acc))
         return
 
     # Train and val
@@ -161,18 +161,18 @@ def main():
         adjust_learning_rate(optimizer, epoch)
         model.module.act_fn.update(epoch)
 
-        print('\nEpoch: [%d | %d] LR: %f' % (epoch + 1, args.epochs, state['lr']))
+        logger.p('\nEpoch: [%d | %d] LR: %f' % (epoch + 1, args.epochs, state['lr']))
 
         train_loss, train_acc = train(trainloader, model, criterion, optimizer, epoch, use_cuda)
         
-        print('Train Loss/Acc: %.2f/%.2f' % (train_loss, train_acc))
+        logger.p('Train Loss/Acc: %.2f/%.2f' % (train_loss, train_acc))
         
         logger.add_train('Loss', train_loss, epoch)
         logger.add_train('Top1', train_acc, epoch)
         
         test_loss, test_acc = test(testloader, model, criterion, epoch, use_cuda)
         
-        print('Test Loss/Acc: %.2f/%.2f' % (test_loss, test_acc))
+        logger.p('Test Loss/Acc: %.2f/%.2f' % (test_loss, test_acc))
         
         logger.add_test('Loss', test_loss, epoch)
         logger.add_test('Top1', test_acc, epoch)
@@ -193,8 +193,8 @@ def main():
 
     logger.close()
 
-    print('Best acc:')
-    print(best_acc)
+    logger.p('Best acc:')
+    logger.p(best_acc)
 
 def train(trainloader, model, criterion, optimizer, epoch, use_cuda):
     # switch to train mode

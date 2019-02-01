@@ -15,6 +15,9 @@ class Logger(object):
         fpath = os.path.join(self.dir, self.filename)
         if fpath is not None:
             self.file = open(fpath, 'w')
+        fpath = os.path.join(self.dir, 'output.log')
+        if fpath is not None:
+            self.output_file = open(fpath, 'w')
             
         self.train_writer = SummaryWriter(os.path.join(self.dir, 'train'))
         self.test_writer = SummaryWriter(os.path.join(self.dir, 'test'))
@@ -48,5 +51,14 @@ class Logger(object):
     def close(self):
         if self.file is not None:
             self.file.close()
+        if self.output_file is not None:
+            self.output_file.close()
         self.train_writer.close()
         self.test_writer.close()
+        
+    def p(s):
+        print(s)
+        if self.output_file is not None:
+            self.output_file.write(s)
+            self.output_file.write('\n')
+            
